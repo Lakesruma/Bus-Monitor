@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#09090e">
+<title>Bus · St. Gallen</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;600&display=swap');
+
+:root {
+  --bg:    #09090e;
+  --surf:  #111117;
+  --surf2: #18181f;
+  --bdr:   #252530;
+  --bdr2:  #1c1c26;
+  --text:  #dddde8;
+  --muted: #5a5a6e;
+  --ok:    #4af0c0;
+  --warn:  #f0b44a;
+  --err:   #ff5f7e;
+  /* Bus-Farben */
+  --line5: #e03535;   /* Rot  – Linie 5 */
+  --line9: #f0b44a;   /* Gold – Linie 9 */
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'IBM Plex Sans', sans-serif;
+  min-height: 100dvh;
+  padding-bottom: 36px;
+}
+
+/* ── HEADER ── */
+header {
+  position: sticky; top: 0; z-index: 20;
+  background: var(--bg);
+  border-bottom: 1px solid var(--bdr);
+  padding: 13px 18px 10px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.logo {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px; letter-spacing: .18em;
+  text-transform: uppercase; color: var(--muted);
+  display: flex; align-items: center; gap: 7px;
+}
+.live-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--ok);
+  animation: pulse 2.2s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.3;transform:scale(.6)} }
+.clock {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 24px; font-weight: 300; color: var(--text); letter-spacing: .04em;
+}
+
+/* ── PAGE ── */
+main { padding: 12px 11px; display: flex; flex-direction: column; gap: 9px; }
+
+/* ── GROUP ── */
+.group {
+  background: var(--surf);
+  border: 1px solid var(--bdr);
+  border-radius: 18px;
+  overflow: hidden;
+}
+.group-toggle {
+  display: flex; align-items: center;
+  padding: 14px 15px;
+  cursor: pointer; user-select: none; gap: 10px;
+  border-bottom: 1px solid transparent;
+  transition: border-color .2s;
+}
+.group.open .group-toggle { border-bottom-color: var(--bdr); }
+
+.g-icon {
+  width: 30px; height: 30px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; flex-shrink: 0;
+  background: rgba(255,255,255,.06);
+}
+.g-label {
+  flex: 1; font-size: 14px; font-weight: 600;
+  color: #ffffff;
+}
+.chevron {
+  color: var(--muted); font-size: 14px;
+  font-family: 'IBM Plex Mono', monospace;
+  transition: transform .22s ease; line-height: 1;
+}
+.group.open .chevron { transform: rotate(90deg); }
+
+/* ── GROUP BODY ── */
+.group-body { display: none; flex-direction: column; }
+.group.open .group-body { display: flex; }
+
+/* ── ROUTE BLOCK ── */
+.route-block { border-bottom: 1px solid var(--bdr2); }
+.route-block:last-child { border-bottom: none; }
+.route-hd {
+  display: flex; align-items: center;
+  padding: 9px 15px 7px; gap: 9px;
+}
+
+/* Badge – Farbe nach Linie */
+.badge {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px; font-weight: 500;
+  padding: 3px 9px; border-radius: 6px; flex-shrink: 0;
+  color: #fff;
+}
+.b5 { background: var(--line5); }
+.b9 { background: rgba(240,180,74,.20); color: var(--line9); border: 1px solid rgba(240,180,74,.35); }
+
+.route-desc {
+  font-size: 11px; color: var(--muted);
+  font-family: 'IBM Plex Mono', monospace;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ── DEP LIST ── */
+.dep-list { list-style: none; padding: 0 0 6px; }
+
+.dep-item {
+  display: flex; align-items: center;
+  padding: 7px 15px 7px 38px;
+  gap: 10px;
+  border-top: 1px solid var(--bdr2);
+  animation: fd .22s ease;
+}
+@keyframes fd { from{opacity:0;transform:translateY(3px)} to{opacity:1;transform:none} }
+
+.dep-dest {
+  flex: 1; font-size: 13px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.dep-right {
+  display: flex; align-items: baseline; gap: 5px; flex-shrink: 0;
+}
+.dep-time {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 16px; font-weight: 400;
+}
+.dep-cd {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px; min-width: 30px; text-align: right;
+}
+.cd-ok   { color: var(--ok); }
+.cd-near { color: var(--warn); }
+.cd-soon { color: var(--err); }
+.cd-gone { color: var(--muted); text-decoration: line-through; }
+.dep-delay {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px; color: var(--err); flex-shrink: 0;
+}
+
+.dep-load {
+  display: flex; align-items: center; gap: 8px;
+  padding: 11px 15px 11px 38px;
+  color: var(--muted); font-size: 12px;
+}
+.spin {
+  width: 13px; height: 13px;
+  border: 2px solid var(--bdr); border-top-color: var(--ok);
+  border-radius: 50%;
+  animation: sp .7s linear infinite; flex-shrink: 0;
+}
+@keyframes sp { to{transform:rotate(360deg)} }
+.dep-err  { padding: 11px 15px 11px 38px; color: var(--err);   font-size: 12px; }
+.dep-none { padding: 11px 15px 11px 38px; color: var(--muted); font-size: 12px; font-family: 'IBM Plex Mono', monospace; }
+
+/* ── FOOTER ── */
+.foot { display: flex; justify-content: flex-end; padding: 0 4px; }
+.foot-txt {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px; color: var(--muted);
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><span class="live-dot"></span>St. Gallen Bus</div>
+  <span class="clock" id="clock">--:--</span>
+</header>
+
+<main>
+
+  <!-- ZUR UNIVERSITÄT -->
+  <div class="group open" id="grp-uni">
+    <div class="group-toggle" onclick="toggleGroup('grp-uni')">
+      <div class="g-icon">🎓</div>
+      <span class="g-label">Zur Universität</span>
+      <span class="chevron">›</span>
+    </div>
+    <div class="group-body">
+      <!-- 5er: Sonnenhalde → Riethüsli (Abfahrt von Sonnenhalde) -->
+      <div class="route-block">
+        <div class="route-hd">
+          <span class="badge b5">5</span>
+          <span class="route-desc">Sonnenhalde → Uni Dufourstrasse</span>
+        </div>
+        <ul class="dep-list" id="list-uni-5"><li class="dep-load"><div class="spin"></div>Lade…</li></ul>
+      </div>
+      <!-- 9er: Sonne → Hölzli (Abfahrt von Sonne) -->
+      <div class="route-block">
+        <div class="route-hd">
+          <span class="badge b9">9</span>
+          <span class="route-desc">Sonne → Uni Gatterstrasse</span>
+        </div>
+        <ul class="dep-list" id="list-uni-9"><li class="dep-load"><div class="spin"></div>Lade…</li></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- NACHHAUSE -->
+  <div class="group open" id="grp-home">
+    <div class="group-toggle" onclick="toggleGroup('grp-home')">
+      <div class="g-icon">🏠</div>
+      <span class="g-label">Nachhause</span>
+      <span class="chevron">›</span>
+    </div>
+    <div class="group-body">
+      <!-- 5er: Uni/Dufourstrasse → Rotmonten (Richtung Sonnenhalde) -->
+      <div class="route-block">
+        <div class="route-hd">
+          <span class="badge b5">5</span>
+          <span class="route-desc">Uni Dufourstrasse → Sonnenhalde</span>
+        </div>
+        <ul class="dep-list" id="list-home-5"><li class="dep-load"><div class="spin"></div>Lade…</li></ul>
+      </div>
+      <!-- 9er: Uni/Gatterstrasse → Schuppis Nord -->
+      <div class="route-block">
+        <div class="route-hd">
+          <span class="badge b9">9</span>
+          <span class="route-desc">Uni Gatterstrasse → Sonne</span>
+        </div>
+        <ul class="dep-list" id="list-home-9"><li class="dep-load"><div class="spin"></div>Lade…</li></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- BAHNHOF -->
+  <div class="group" id="grp-bhf">
+    <div class="group-toggle" onclick="toggleGroup('grp-bhf')">
+      <div class="g-icon">🚂</div>
+      <span class="g-label">Bahnhof</span>
+      <span class="chevron">›</span>
+    </div>
+    <div class="group-body">
+      <!-- 5er: Sonnenhalde → Bahnhof -->
+      <div class="route-block">
+        <div class="route-hd">
+          <span class="badge b5">5</span>
+          <span class="route-desc">Sonnenhalde → Bahnhof</span>
+        </div>
+        <ul class="dep-list" id="list-bhf-hin"><li class="dep-load"><div class="spin"></div>Lade…</li></ul>
+      </div>
+      <!-- 5er: Bahnhof → Sonnenhalde (Richtung Rotmonten/Riethüsli) -->
+      <div class="route-block">
+        <div class="route-hd">
+          <span class="badge b5">5</span>
+          <span class="route-desc">Bahnhof → Sonnenhalde</span>
+        </div>
+        <ul class="dep-list" id="list-bhf-ret"><li class="dep-load"><div class="spin"></div>Lade…</li></ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span class="foot-txt" id="ref-info">Wird geladen…</span>
+  </div>
+
+</main>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  ROUTEN – mit verifizierten Station-IDs
+//  dest: Ziel-Filter (Substring, case-insensitive)
+//        null = kein Filter
+// ══════════════════════════════════════════════════════
+const ROUTES = [
+  // Zur Uni
+  {
+    id: 'uni-5',
+    stationId: '8589627',           // St. Gallen, Sonnenhalde
+    line: '5',
+    dest: 'Riethüsli',
+    limit: 3,
+  },
+  {
+    id: 'uni-9',
+    stationId: '8589626',           // St. Gallen, Sonne
+    line: '9',
+    dest: 'Hölzli',
+    limit: 3,
+  },
+  // Nachhause
+  {
+    id: 'home-5',
+    stationId: '8589637',           // St. Gallen, Uni/Dufourstrasse
+    line: '5',
+    dest: 'Rotmonten',              // 5er fährt via Sonnenhalde nach Rotmonten
+    limit: 3,
+  },
+  {
+    id: 'home-9',
+    stationId: '8589575',           // St. Gallen, Uni/Gatterstrasse
+    line: '9',
+    dest: 'Schuppis',               // "Schuppis Nord"
+    limit: 3,
+  },
+  // Bahnhof hin
+  {
+    id: 'bhf-hin',
+    stationId: '8589627',           // St. Gallen, Sonnenhalde
+    line: '5',
+    dest: null,                     // kein Zielfilter – alle 5er (Richtung Bahnhof)
+    destExclude: 'Riethüsli',       // Riethüsli-Kurse ausblenden (falsche Richtung)
+    limit: 3,
+  },
+  // Bahnhof zurück
+  {
+    id: 'bhf-ret',
+    stationId: '8574095',           // St. Gallen, Bahnhof
+    line: '5',
+    dest: null,                     // alle 5er ab Bahnhof Richtung Rotmonten/Riethüsli
+    limit: 3,
+  },
+];
+
+// ══════════════════════════════════════════════════════
+//  UHR
+// ══════════════════════════════════════════════════════
+function tick() {
+  const n = new Date();
+  document.getElementById('clock').textContent =
+    String(n.getHours()).padStart(2,'0') + ':' + String(n.getMinutes()).padStart(2,'0');
+}
+tick(); setInterval(tick, 5000);
+
+// ══════════════════════════════════════════════════════
+//  TOGGLE
+// ══════════════════════════════════════════════════════
+function toggleGroup(id) {
+  document.getElementById(id).classList.toggle('open');
+}
+
+// ══════════════════════════════════════════════════════
+//  API
+// ══════════════════════════════════════════════════════
+async function fetchRoute(r) {
+  const url = `https://transport.opendata.ch/v1/stationboard?id=${r.stationId}&limit=50&transportations[]=bus`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(res.status);
+  const data = await res.json();
+  let board = data.stationboard || [];
+
+  // Linien-Filter (exakt)
+  if (r.line) {
+    board = board.filter(d =>
+      String(d.number || d.name || '').replace(/\D/g, '') === r.line
+    );
+  }
+
+  // Ziel-Filter inkl.
+  if (r.dest) {
+    const dl = r.dest.toLowerCase();
+    board = board.filter(d => String(d.to || '').toLowerCase().includes(dl));
+  }
+
+  // Ziel-Filter exkl.
+  if (r.destExclude) {
+    const ex = r.destExclude.toLowerCase();
+    board = board.filter(d => !String(d.to || '').toLowerCase().includes(ex));
+  }
+
+  return board.slice(0, r.limit);
+}
+
+// ══════════════════════════════════════════════════════
+//  RENDER
+// ══════════════════════════════════════════════════════
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function fmt(d) {
+  return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+function getSched(dep) { const s = dep.stop?.departure;            return s ? new Date(s) : null; }
+function getProg(dep)  { const s = dep.stop?.prognosis?.departure; return s ? new Date(s) : null; }
+
+function renderBoard(id, board) {
+  const el = document.getElementById('list-' + id);
+  if (!board.length) {
+    el.innerHTML = '<li class="dep-none">— keine Abfahrten —</li>';
+    return;
+  }
+  el.innerHTML = board.map(dep => {
+    const sc = getSched(dep);
+    const pr = getProg(dep);
+    const dt = pr || sc;
+    const displayTime = sc ? fmt(sc) : (dt ? fmt(dt) : '--:--');
+
+    // countdown
+    let cdTxt = '', cdCls = 'cd-ok';
+    if (dt) {
+      const m = Math.round((dt - Date.now()) / 60000);
+      if      (m <  0) { cdTxt = 'weg';   cdCls = 'cd-gone'; }
+      else if (m === 0){ cdTxt = 'jetzt'; cdCls = 'cd-soon'; }
+      else if (m <= 2) { cdTxt = `${m}'`; cdCls = 'cd-soon'; }
+      else if (m <= 5) { cdTxt = `${m}'`; cdCls = 'cd-near'; }
+      else             { cdTxt = `${m}'`; cdCls = 'cd-ok';   }
+    }
+
+    // verspätung
+    let delayHtml = '';
+    if (sc && pr) {
+      const delay = Math.round((pr - sc) / 60000);
+      if (delay > 0) delayHtml = `<span class="dep-delay">+${delay}'</span>`;
+    }
+
+    return `<li class="dep-item">
+      <span class="dep-dest">${esc(dep.to || '?')}</span>
+      <div class="dep-right">
+        <span class="dep-time">${displayTime}</span>
+        <span class="dep-cd ${cdCls}">${cdTxt}</span>
+        ${delayHtml}
+      </div>
+    </li>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════
+//  REFRESH
+// ══════════════════════════════════════════════════════
+const cache = {};
+let lastRef = null;
+
+async function refreshAll() {
+  await Promise.all(ROUTES.map(async r => {
+    try {
+      const board = await fetchRoute(r);
+      cache[r.id] = board;
+      renderBoard(r.id, board);
+    } catch(e) {
+      document.getElementById('list-' + r.id).innerHTML =
+        '<li class="dep-err">⚠ Fehler – Netz prüfen</li>';
+    }
+  }));
+  lastRef = new Date();
+  updateFoot();
+}
+
+function reCountdowns() {
+  ROUTES.forEach(r => { if (cache[r.id]) renderBoard(r.id, cache[r.id]); });
+  updateFoot();
+}
+
+function updateFoot() {
+  if (!lastRef) return;
+  const s = Math.round((Date.now() - lastRef) / 1000);
+  document.getElementById('ref-info').textContent = `Vor ${s}s aktualisiert · alle 30s`;
+}
+
+refreshAll();
+setInterval(refreshAll,   30000);
+setInterval(reCountdowns, 15000);
+</script>
+</body>
+</html>
